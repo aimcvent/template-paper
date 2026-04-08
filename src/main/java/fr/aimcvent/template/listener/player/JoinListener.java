@@ -27,6 +27,7 @@ public class JoinListener implements Listener {
         event.joinMessage(null);
 
         final Player player = this.templateService.players().of(event.getPlayer());
+        player.sidebar().enabled(true);
         final Translation translation = player.aimcvent().translation();
 
         this.paperService.tabListOf(this.templateService)
