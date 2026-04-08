@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'io.papermc.paperweight.userdev' version '2.0.0-beta.17'
+}
+
+group = 'fr.aimcvent'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://jitpack.io/' }
+}
+
+dependencies {
+    compileOnly 'com.google.code.gson:gson:2.10.1';
+    compileOnly 'com.github.aimcvent:paper-api:1.0.1'
+    compileOnly 'net.kyori:adventure-text-serializer-legacy:4.24.0'
+    compileOnly 'net.kyori:adventure-text-serializer-ansi:4.24.0'
+    testImplementation 'net.kyori:adventure-text-serializer-ansi:4.24.0'
+    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
+}
+
+paperweight {
+    javaLauncher = javaToolchains.launcherFor {
+        // Example scenario:
+        // Paper 1.17.1 was originally built with JDK 16 and the bundle
+        // has not been updated to work with 21+ (but we want to compile with a 25 toolchain)
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+def targetJavaVersion = 21
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+jar {
+    // Use the runtime classpath (resolvable) when creating a fat jar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude('META-INF/LICENSE', 'META-INF/NOTICE')
+    doFirst {
+        from { (configurations.runtimeClasspath.findAll { !it.path.endsWith(".pom") })
+                .collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+}
